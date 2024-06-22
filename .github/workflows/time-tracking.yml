@@ -17,10 +17,11 @@ jobs:
           echo "Project: ${{ github.event.repository.name }}"
           echo "Label: ${{ github.event.label.name }}"
 
-      - name: Move Issues To Project Column
-        uses: fojia/action-move-issues-to-column@v1.0.2
+      - name: Move card to 'In Progress'
+        if: github.event.label.name == 'in progress'
+        uses: alex-page/github-project-automation-plus@v0.8.3
         with:
-          project: 'track-time-workflow'          
-          column: 'In progress'
-          owner: 'sha-zha'
+          project: github.event.repository.name
+          column: In progress
+          repo-token: ${{ secrets.TOKEN }}
         
