@@ -35,4 +35,19 @@ jobs:
 
           console.log('Issue:', issue);
           console.log('Label:', label);
+
+          const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
+
+          const now = new Date().toISOString();
+          console.log('Current time:', now);
+
+          if (label === 'in progress') {
+            octokit.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: issue.labels.map(l => l.name),
+              body: issue.body + `\\n\\nIn Progress Start Time: ${now}`
+            });
+          }
           "
