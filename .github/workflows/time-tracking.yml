@@ -30,4 +30,9 @@ jobs:
           const context = github.context;
 
           console.log('Event received:', JSON.stringify(context.payload, null, 2));
+          const issue = context.payload.issue;
+          const label = context.payload.label.name;
+
+          console.log('Issue:', issue);
+          console.log('Label:', label);
           "
