@@ -16,7 +16,7 @@ jobs:
         with:
           node-version: '14'
 
-      - name: Track time
+      - name: Track times
         run: |
           node -e "
           const github = require('@actions/github');
