@@ -18,6 +18,12 @@ jobs:
           echo "Project: ${{ github.event.repository.name }}"
           echo "Label: ${{ github.event.label.name }}"
 
-      - name: Move card to 'In Progress'
-        if: github.event.label.name == 'in progress'
-        uses: alex-page/github-project-automation-plus@v0.8.3
+              - name: Move Issues To Project Column
+                uses: fojia/action-move-issues-to-column@v1.0.2
+                  with:
+                  project: 'tracking-time-workflow'
+                  # Project Column Name.
+                  column: 'In progress'
+                  type:'repo'
+                  owner: 'sha-zha'
+          
