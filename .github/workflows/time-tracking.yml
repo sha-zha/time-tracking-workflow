@@ -10,7 +10,7 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v2
-
+ 
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
@@ -25,5 +25,9 @@ jobs:
 
           echo "Running the tracking script..."
           node -e "
-         
+          const github = require('@actions/github');
+          const core = require('@actions/core');
+          const context = github.context;
+
+          console.log('Event received:', JSON.stringify(context.payload, null, 2));
           "
