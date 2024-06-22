@@ -14,7 +14,6 @@ jobs:
       - name: Check if label is 'in progress'
         if: github.event.label.name == 'in progress'
         run: |
-          echo "Label is 'in progress', proceeding with the workflow...
           echo "Project: ${{ github.event.repository.name }}"
           echo "Label: ${{ github.event.label.name }}"
 
