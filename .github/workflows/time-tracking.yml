@@ -37,7 +37,7 @@ jobs:
           console.log('Label:', label);
 
           const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
-
+          console.log(process.env.GITHUB_TOKEN)
           const now = new Date().toISOString();
           console.log('Current time:', now);
 
