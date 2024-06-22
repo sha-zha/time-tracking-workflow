@@ -21,7 +21,3 @@ jobs:
       - name: Move card to 'In Progress'
         if: github.event.label.name == 'in progress'
         uses: alex-page/github-project-automation-plus@v0.8.3
-        with:
-          project: github.event.repository.name
-          column: In progress
-          repo-token: ${{ secrets.TOKEN }}
