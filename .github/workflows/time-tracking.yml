@@ -11,7 +11,13 @@ jobs:
       - name: Check if label is 'in progress'
         if: github.event.label.name == 'in progress'
         run: |
-          echo "Label is 'in progress', proceeding with the workflow..."
+          echo "Label is 'in progress', proceeding with the workflow...
+      - name: Debug GitHub Project and Column
+        if: github.event.label.name == 'in progress'
+        run: |
+          echo "Project: ${{ github.event.repository.name }}"
+          echo "Label: ${{ github.event.label.name }}"
+
       - name: Move card to 'In Progress'
         if: github.event.label.name == 'in progress'
         uses: alex-page/github-project-automation-plus@7ffb872c64bd809d23563a130a0a97d01dfa8f43
