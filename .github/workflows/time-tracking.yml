@@ -45,7 +45,7 @@ jobs:
           
           if (label === 'in progress') {
             
-            updatedBody = (issue.body || '') + `\nStart Date: ${now}`;
+            updatedBody = (issue.body || '') + '\nStart Date:'+now
             octokit.issues.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
