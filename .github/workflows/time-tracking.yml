@@ -1,0 +1,68 @@
+name: Time Tracking Workflow
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  track-time:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Track time
+        run: |
+          node -e "
+          const github = require('@actions/github');
+          const core = require('@actions/core');
+          const context = github.context;
+
+          const issue = context.payload.issue;
+          const label = context.payload.label.name;
+
+          const octokit = github.getOctokit(core.getInput('github-token'));
+
+          const now = new Date().toISOString();
+
+          if (label === 'In progress') {
+            octokit.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: issue.labels.map(l => l.name),
+              body: issue.body + `\n\nIn Progress Start Time: ${now}`
+            });
+          } else if (label === 'Review') {
+            const body = issue.body;
+            const inProgressStartTime = body.match(/In Progress Start Time: (.*)/)[1];
+            const inProgressTime = new Date(now) - new Date(inProgressStartTime);
+            octokit.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: issue.labels.map(l => l.name),
+              body: body + `\n\nReview Start Time: ${now}\nTime Spent in Progress: ${inProgressTime}`
+            });
+          } else if (label === 'Done') {
+            const body = issue.body;
+            const reviewStartTime = body.match(/Review Start Time: (.*)/)[1];
+            const reviewTime = new Date(now) - new Date(reviewStartTime);
+            const inProgressTime = parseInt(body.match(/Time Spent in Progress: (\d+)/)[1], 10);
+            const totalTime = inProgressTime + reviewTime;
+            octokit.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: issue.labels.map(l => l.name),
+              body: body + `\n\nTime Spent in Review: ${reviewTime}\nTotal Time Spent: ${totalTime}`
+            });
+          }
+          "
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
