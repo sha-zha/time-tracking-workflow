@@ -42,11 +42,16 @@ jobs:
           console.log('Current time:', now);
 
           if (label === 'in progress') {
+            const updatedBody = issue.body ? issue.body + `\nStart Date: ${now}` : `Start Date: ${now}`;
             octokit.issues.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issue.number,
-              body : issue.body += '\nStart Date:'+now
+              body: updatedBody
+            }).then(response => {
+              console.log('Issue updated successfully:', response.data.html_url);
+            }).catch(error => {
+              console.error('Error updating issue:', error);
             });
           }
           "
