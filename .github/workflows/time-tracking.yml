@@ -41,8 +41,14 @@ jobs:
           const now = new Date().toISOString();
           console.log('Current time:', now);
 
+          var updatedBody='';
+          
           if (label === 'in progress') {
-            const updatedBody = (issue.body) ? issue.body + `\nStart Date: ${now}` : `Start Date: ${now}`;
+            if(issue.body){
+              updatedBody = issue.body + `\nStart Date: ${now}`;
+            }else{
+              updatedBody = `Start Date: ${now}`;
+            } 
             octokit.issues.update({
               owner: context.repo.owner,
               repo: context.repo.repo,
