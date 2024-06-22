@@ -20,6 +20,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          echo "Installing dependencies..."
+          npm install @actions/github @actions/core
+
+          echo "Running the tracking script..."
           node -e "
           const github = require('@actions/github');
           const core = require('@actions/core');
