@@ -8,6 +8,13 @@ jobs:
   start-timer:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2  # Cette action permet de cloner le repository
+
+      # Vous pouvez maintenant exécuter des commandes git ou d'autres actions qui nécessitent un repository Git valide
+      - name: Display Git status
+        run: git status
+
       - name: Set up GitHub CLI
         uses: actions/setup-node@v3
         with:
