@@ -27,4 +27,4 @@ jobs:
           INPUT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           INPUT_TARGETS: 'in progress, done'  # Modifiez selon vos besoins
           GITHUB_EVENT_PATH: ${{ github.event_path }}
-        run: python .github/scripts/label_timer.py
+        run: python .github/script/label_timer.py
