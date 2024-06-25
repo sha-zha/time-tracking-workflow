@@ -14,8 +14,7 @@ jobs:
       - name: Track label time
         uses: tbsmcd/label_timer@v3.1
         with:
-          start_label: 'in progress'
-          stop_label: 'done'
-          comment: 'true'
+           targets: 'in progress, review, done'
+           token: ${{ secrets.GITHUB_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
