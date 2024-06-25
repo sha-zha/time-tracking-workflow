@@ -33,4 +33,4 @@ jobs:
             echo "Label 'started-at-${START_TIME}' already exists."
           else
             gh issue edit ${{ github.event.issue.number }} --add-label "started-at-${START_TIME}"
-          fi"
+          fi
