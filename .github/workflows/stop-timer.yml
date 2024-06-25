@@ -1,0 +1,47 @@
+name: Stop Timer
+
+on:
+  issues:
+    types: [unlabeled]
+
+jobs:
+  stop-timer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up GitHub CLI
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+      
+      - name: Check if removed label is "in progress"
+        if: github.event.label.name == 'in progress'
+        run: |
+          echo "Label 'in progress' removed. Calculating time spent."
+          
+          # Get the start time label
+          ISSUE_NUMBER=${{ github.event.issue.number }}
+          LABELS=$(gh issue view $ISSUE_NUMBER --json labels --jq '.labels[].name')
+          START_LABEL=$(echo "$LABELS" | grep 'started-at-' | head -n 1)
+          
+          if [ -z "$START_LABEL" ]; then
+            echo "No start time found. Exiting."
+            exit 1
+          fi
+          
+          START_TIME=${START_LABEL#"started-at-"}
+          END_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          
+          START_TIMESTAMP=$(date -d "$START_TIME" +%s)
+          END_TIMESTAMP=$(date -d "$END_TIME" +%s)
+          
+          DURATION_SECONDS=$((END_TIMESTAMP - START_TIMESTAMP))
+          DURATION_HOURS=$((DURATION_SECONDS / 3600))
+          DURATION_MINUTES=$(( (DURATION_SECONDS % 3600) / 60))
+          
+          TIME_SPENT="${DURATION_HOURS} hours and ${DURATION_MINUTES} minutes"
+          
+          # Add a comment with the time spent
+          gh issue comment $ISSUE_NUMBER --body "Time spent 'in progress': $TIME_SPENT"
+          
+          # Remove the start time label
+          gh issue edit $ISSUE_NUMBER --remove-label "$START_LABEL"
