@@ -12,9 +12,11 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '14'
-          
+
       - name: Check if label is "in progress"
         if: github.event.label.name == 'in progress'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Label is 'in progress'. Recording start time."
           START_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
