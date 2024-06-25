@@ -27,4 +27,5 @@ jobs:
         run: |
           echo "Adding comment to issue..."
           CURRENT_DATE=$(date -u +"%d/%m/%Y à %H:%M")
+          gh auth login --with-token "${GITHUB_TOKEN}"
           gh issue comment ${{ github.event.issue.number }} --body "Commencez le ${CURRENT_DATE}"
