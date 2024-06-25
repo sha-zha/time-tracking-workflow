@@ -1,8 +1,8 @@
-name: Time Tracking Workflow
+name: Issue Time Tracker
 
 on:
   issues:
-    types: [labeled]
+    types: [labeled, unlabeled]
 
 jobs:
   track-time:
@@ -11,17 +11,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
         
-      - name: Check if label is 'in progress'
-        if: github.event.label.name == 'in progress'
-        run: |
-          echo "Project: ${{ github.event.repository.name }}"
-          echo "Label: ${{ github.event.label.name }}"
-
-      - name: Move card to 'In Progress'
-        if: github.event.label.name == 'in progress'
-        uses: alex-page/github-project-automation-plus@v0.8.3
+      - name: Track label time
+        uses: tbsmcd/label_timer@v3.1
         with:
-          project: 'track-time-workflow'
-          column: 'In progress'
-          repo-token: ${{ secrets.TOKEN }}
-        
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          start-label: 'in progress'
+          stop-label: 'review'
+          comment: true  # Add a comment with the time spent when the stop-label is applied
