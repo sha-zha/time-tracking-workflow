@@ -20,17 +20,9 @@ jobs:
         with:
           node-version: '14'
 
-      - name: Check if label is "in progress"
+      - name: Add comment to issue
         if: github.event.label.name == 'in progress'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-         echo "Label is 'in progress'. Recording start time."
-          START_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          
-          # Check if the label already exists before trying to add it
-          if gh issue view ${{ github.event.issue.number }} --label "started-at-${START_TIME}" > /dev/null 2>&1; then
-            echo "Label 'started-at-${START_TIME}' already exists."
-          else
-            gh issue edit ${{ github.event.issue.number }} --add-label "started-at-${START_TIME}"
-          fi
+          echo "Adding comment to issue..."
+          CURRENT_DATE=$(date -u +"%d/%m/%Y à %H:%M")
+          gh issue comment ${{ github.event.issue.number }} --body "Commencez le ${CURRENT_DATE}"
