@@ -1,20 +1,30 @@
-name: Issue Time Tracker
+name: Label Timer
 
 on:
   issues:
-    types: [labeled, unlabeled]
+    types: ['labeled', 'unlabeled']
+  pull_request:
+    types: ['labeled', 'unlabeled']
 
 jobs:
-  track-time:
+  label-timer:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-        
-      - name: Track label time
-        uses: tbsmcd/label_timer@v3.1
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
         with:
-           targets: 'in progress, review, done'
-           token: ${{ secrets.GITHUB_TOKEN }}
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run label timer script
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_TARGETS: 'in progress, done'  # Modifiez selon vos besoins
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+        run: python .github/scripts/label_timer.py
