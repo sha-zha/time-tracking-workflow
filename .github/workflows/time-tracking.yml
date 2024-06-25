@@ -22,6 +22,8 @@ jobs:
 
       - name: Add comment to issue
         if: github.event.label.name == 'in progress'
+        env:
+           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Adding comment to issue..."
           CURRENT_DATE=$(date -u +"%d/%m/%Y à %H:%M")
