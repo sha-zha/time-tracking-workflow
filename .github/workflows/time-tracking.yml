@@ -25,6 +25,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "Label is 'in progress'. Recording start time."
+         echo "Label is 'in progress'. Recording start time."
           START_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          gh issue edit ${{ github.event.issue.number }} --add-label "started-at-${START_TIME}"
+          
+          # Check if the label already exists before trying to add it
+          if gh issue view ${{ github.event.issue.number }} --label "started-at-${START_TIME}" > /dev/null 2>&1; then
+            echo "Label 'started-at-${START_TIME}' already exists."
+          else
+            gh issue edit ${{ github.event.issue.number }} --add-label "started-at-${START_TIME}"
+          fi"
