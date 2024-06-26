@@ -19,7 +19,7 @@ jobs:
         if: contains(github.event.label.name, 'in progress')
         uses: actions/github-script@v6
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
         with:
           script: |
             const issue_number = context.issue.number;
