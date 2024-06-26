@@ -1,7 +1,6 @@
 name: Time Tracking for Issue Transitions
 
 on:
-  # Déclencher le workflow pour les événements de changement de label
   issues:
     types: [labeled, unlabeled]
     labels: [baglog, in progress, wait_review, review, done]
@@ -11,25 +10,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Initialiser les variables pour stocker les timestamps et le temps total
       - name: Initialize variables
         id: init
         run: |
-          echo "START_TIME=" >> $GITHUB_OUTPUT
-          echo "END_TIME=" >> $GITHUB_OUTPUT
-          echo "TOTAL_TIME=0" >> $GITHUB_OUTPUT
+          echo "START_TIME=" >> $GITHUB_ENV
+          echo "END_TIME=" >> $GITHUB_ENV
+          echo "TOTAL_TIME=0" >> $GITHUB_ENV
 
-      # Gérer les événements de changement de label
       - name: Handle label change events
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const issue_number = ${{ github.event.issue.number }};
-            const previous_labels = github.context.issue.previous_labels.map(label => label.name);
-            const current_labels = github.context.issue.labels.map(label => label.name);
+            const issue_number = context.issue.number;
+            const previous_labels = context.payload.changes.labels.from.map(label => label.name);
+            const current_labels = context.payload.issue.labels.map(label => label.name);
 
-            // Déterminer le changement de label
+            // Determine the label transition
             let transition = "";
             if (previous_labels.includes("baglog") && current_labels.includes("in progress")) {
               transition = "baglog_to_in_progress";
@@ -41,32 +38,34 @@ jobs:
               transition = "review_to_done";
             }
 
-            // Mettre à jour les timestamps et le temps total en fonction de la transition
+            // Update timestamps and total time based on the transition
             if (transition) {
               const now = Date.now();
               if (transition === "baglog_to_in_progress") {
-                start_time = now;
-                echo "START_TIME=$now" >> $GITHUB_OUTPUT;
+                core.exportVariable('START_TIME', now);
               } else if (transition === "review_to_done") {
-                end_time = now;
-                echo "END_TIME=$now" >> $GITHUB_OUTPUT;
+                core.exportVariable('END_TIME', now);
               }
 
+              const start_time = parseInt(process.env.START_TIME || "0", 10);
+              const end_time = parseInt(process.env.END_TIME || "0", 10);
               if (start_time && end_time) {
-                elapsed_time = end_time - start_time;
-                total_time += elapsed_time;
-                echo "TOTAL_TIME=$total_time" >> $GITHUB_OUTPUT;
+                const elapsed_time = (end_time - start_time) / 1000;
+                const total_time = parseInt(process.env.TOTAL_TIME || "0", 10) + elapsed_time;
+                core.exportVariable('TOTAL_TIME', total_time);
 
-                // Poster un commentaire avec le temps passé pour la transition
-                const formatted_time = Math.floor(elapsed_time / 60) + " minutes " + (elapsed_time % 60) + " seconds";
+                // Post a comment with the time spent on the transition
+                const formatted_time = `${Math.floor(elapsed_time / 60)} minutes ${Math.floor(elapsed_time % 60)} seconds`;
                 const comment = `Temps passé pour ${transition}: ${formatted_time}`;
-                github.issues.createComment({
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
                   issue_number,
-                  body: comment
+                  body: comment,
                 });
 
-                // Réinitialiser les timestamps
-                start_time = null;
-                end_time = null;
+                // Reset timestamps
+                core.exportVariable('START_TIME', "");
+                core.exportVariable('END_TIME', "");
               }
             }
