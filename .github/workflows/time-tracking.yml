@@ -1,9 +1,8 @@
-name: Time Tracking for Issue Transitions
+name: Time Tracking for "In Progress" Label
 
 on:
   issues:
-    types: [labeled, unlabeled]
-    labels: [baglog, in progress, wait_review, review, done]
+    types: [labeled]
 
 jobs:
   time-tracking:
@@ -11,61 +10,45 @@ jobs:
 
     steps:
       - name: Initialize variables
-        id: init
         run: |
           echo "START_TIME=" >> $GITHUB_ENV
           echo "END_TIME=" >> $GITHUB_ENV
           echo "TOTAL_TIME=0" >> $GITHUB_ENV
 
-      - name: Handle label change events
+      - name: Handle "In Progress" label
+        if: contains(github.event.label.name, 'in progress')
         uses: actions/github-script@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const issue_number = context.issue.number;
-            const previous_labels = context.payload.changes.labels.from.map(label => label.name);
-            const current_labels = context.payload.issue.labels.map(label => label.name);
+            const now = Date.now();
 
-            // Determine the label transition
-            let transition = "";
-            if (previous_labels.includes("baglog") && current_labels.includes("in progress")) {
-              transition = "baglog_to_in_progress";
-            } else if (previous_labels.includes("in progress") && current_labels.includes("wait_review")) {
-              transition = "in_progress_to_wait_review";
-            } else if (previous_labels.includes("wait_review") && current_labels.includes("review")) {
-              transition = "wait_review_to_review";
-            } else if (previous_labels.includes("review") && current_labels.includes("done")) {
-              transition = "review_to_done";
-            }
+            if (!process.env.START_TIME) {
+              require('fs').appendFileSync(process.env.GITHUB_ENV, `START_TIME=${now}\n`);
+              const comment = `Timer started for issue #${issue_number} at ${new Date(now).toISOString()}`;
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                body: comment,
+              });
+            } else {
+              const start_time = parseInt(process.env.START_TIME, 10);
+              const elapsed_time = Math.floor((now - start_time) / 1000);
+              const total_time = parseInt(process.env.TOTAL_TIME || '0', 10) + elapsed_time;
+              require('fs').appendFileSync(process.env.GITHUB_ENV, `TOTAL_TIME=${total_time}\n`);
 
-            // Update timestamps and total time based on the transition
-            if (transition) {
-              const now = Date.now();
-              if (transition === "baglog_to_in_progress") {
-                core.exportVariable('START_TIME', now);
-              } else if (transition === "review_to_done") {
-                core.exportVariable('END_TIME', now);
-              }
+              const formatted_time = `${Math.floor(elapsed_time / 60)} minutes ${elapsed_time % 60} seconds`;
+              const comment = `Elapsed time for issue #${issue_number}: ${formatted_time}`;
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                body: comment,
+              });
 
-              const start_time = parseInt(process.env.START_TIME || "0", 10);
-              const end_time = parseInt(process.env.END_TIME || "0", 10);
-              if (start_time && end_time) {
-                const elapsed_time = (end_time - start_time) / 1000;
-                const total_time = parseInt(process.env.TOTAL_TIME || "0", 10) + elapsed_time;
-                core.exportVariable('TOTAL_TIME', total_time);
-
-                // Post a comment with the time spent on the transition
-                const formatted_time = `${Math.floor(elapsed_time / 60)} minutes ${Math.floor(elapsed_time % 60)} seconds`;
-                const comment = `Temps passé pour ${transition}: ${formatted_time}`;
-                await github.rest.issues.createComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number,
-                  body: comment,
-                });
-
-                // Reset timestamps
-                core.exportVariable('START_TIME', "");
-                core.exportVariable('END_TIME', "");
-              }
+              // Reset the timer
+              require('fs').appendFileSync(process.env.GITHUB_ENV, `START_TIME=${now}\n`);
             }
