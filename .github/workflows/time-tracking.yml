@@ -1,31 +1,72 @@
-name: Start Timer
+name: Time Tracking for Issue Transitions
 
 on:
+  # Déclencher le workflow pour les événements de changement de label
   issues:
-    types: [labeled]
+    types: [labeled, unlabeled]
+    labels: [baglog, in progress, wait_review, review, done]
 
 jobs:
-  start-timer:
+  time-tracking:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2  # Cette action permet de cloner le repository
-
-      # Vous pouvez maintenant exécuter des commandes git ou d'autres actions qui nécessitent un repository Git valide
-      - name: Display Git status
-        run: git status
-
-      - name: Set up GitHub CLI
-        uses: actions/setup-node@v3
-        with:
-          node-version: '14'
-
-      - name: Add comment to issue
-        if: github.event.label.name == 'in progress'
-        env:
-           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Initialiser les variables pour stocker les timestamps et le temps total
+      - name: Initialize variables
+        id: init
         run: |
-          echo "Adding comment to issue..."
-          CURRENT_DATE=$(date -u +"%d/%m/%Y à %H:%M")
-          gh auth login --with-token "${GITHUB_TOKEN}"
-          gh issue comment ${{ github.event.issue.number }} --body "Commencez le ${CURRENT_DATE}"
+          echo "START_TIME=" >> $GITHUB_OUTPUT
+          echo "END_TIME=" >> $GITHUB_OUTPUT
+          echo "TOTAL_TIME=0" >> $GITHUB_OUTPUT
+
+      # Gérer les événements de changement de label
+      - name: Handle label change events
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issue_number = ${{ github.event.issue.number }};
+            const previous_labels = github.context.issue.previous_labels.map(label => label.name);
+            const current_labels = github.context.issue.labels.map(label => label.name);
+
+            // Déterminer le changement de label
+            let transition = "";
+            if (previous_labels.includes("baglog") && current_labels.includes("in progress")) {
+              transition = "baglog_to_in_progress";
+            } else if (previous_labels.includes("in progress") && current_labels.includes("wait_review")) {
+              transition = "in_progress_to_wait_review";
+            } else if (previous_labels.includes("wait_review") && current_labels.includes("review")) {
+              transition = "wait_review_to_review";
+            } else if (previous_labels.includes("review") && current_labels.includes("done")) {
+              transition = "review_to_done";
+            }
+
+            // Mettre à jour les timestamps et le temps total en fonction de la transition
+            if (transition) {
+              const now = Date.now();
+              if (transition === "baglog_to_in_progress") {
+                start_time = now;
+                echo "START_TIME=$now" >> $GITHUB_OUTPUT;
+              } else if (transition === "review_to_done") {
+                end_time = now;
+                echo "END_TIME=$now" >> $GITHUB_OUTPUT;
+              }
+
+              if (start_time && end_time) {
+                elapsed_time = end_time - start_time;
+                total_time += elapsed_time;
+                echo "TOTAL_TIME=$total_time" >> $GITHUB_OUTPUT;
+
+                // Poster un commentaire avec le temps passé pour la transition
+                const formatted_time = Math.floor(elapsed_time / 60) + " minutes " + (elapsed_time % 60) + " seconds";
+                const comment = `Temps passé pour ${transition}: ${formatted_time}`;
+                github.issues.createComment({
+                  issue_number,
+                  body: comment
+                });
+
+                // Réinitialiser les timestamps
+                start_time = null;
+                end_time = null;
+              }
+            }
